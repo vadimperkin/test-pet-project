@@ -1,0 +1,46 @@
+name: Reusable report downloader and sender (GitHub Pages)
+on:
+  workflow_call:
+    inputs:
+      artifact_name:
+        description: The name of artifact that you want to download
+        required: true
+        default: test_name
+        type: string
+      path:
+        description: The path to the artifact that you want to download
+        required: true
+        default: test
+        type: string
+      publish_branch:
+        description: The branch where you want to upload test report
+        required: false
+        default: gh-pages
+        type: string
+permissions:
+  contents: write
+  pages: write     
+jobs:
+  download_deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: ${{ inputs.artifact_name }}
+          path: ${{ inputs.path }}
+      - name: Display result
+        run: | 
+          echo "Downloaded artifact name - ${{ inputs.artifact_name }} at path - ${{ inputs.path}}"
+          ls -la
+      - name: Send test report to Github Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./playwright-report
+          publish_branch: ${{ inputs.publish_branch }}
+      - name: Create report env var
+        run: echo "REPO_URL=https://${{ github.event.repository.owner.login }}.github.io/${{ github.event.repository.name }}" >> $GITHUB_ENV 
+      - name: Display the report link
+        run: echo "Playwright test report link - ${{ env.REPO_URL }}"

@@ -1,0 +1,82 @@
+name: Playwright Tests
+on:
+  push:
+    branches:
+      - "**"
+  pull_request:
+    branches:
+      - main
+permissions:
+  contents: write  
+  pages: write     
+jobs:
+  test:
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
+    outputs:
+      artifact_name: ${{ steps.output.outputs.artifact_name }}
+      artifact_path: ${{ steps.output.outputs.artifact_path }}
+    env:
+      USERNAME: ${{ secrets.USERNAME }}
+      PASSWORD: ${{ secrets.PASSWORD }}
+      API_KEY: ${{ secrets.API_KEY }}
+    steps:
+      - name: Get code
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Cache dependencies
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: deps-node-modules-${{ hashFiles('**/package-lock.json') }}
+      - name: Install dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: npm ci
+      - name: Install Chrome Browser
+        run: npx playwright install chromium
+      - name: Run Playwright tests
+        id: test
+        run: npx playwright test
+      - name: Upload artifact
+        id: upload
+        uses: actions/upload-artifact@v4
+        if: ${{ !failure() && steps.test.outcome != 'failure' }}
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 30
+      - name: Set output
+        id: output
+        run: |
+          echo "artifact_name=playwright-report" >> $GITHUB_ENV
+          echo "artifact_path=playwright-report/" >> $GITHUB_ENV
+  deploy_report:
+    needs: test
+    uses: ./.github/workflows/reusable-report.yml
+    with:
+      artifact_name: ${{ needs.test.outputs.artifact_name }}
+      path: ${{ needs.test.outputs.artifact_path }}
+      publish_branch: gh-pages
+  send_report:
+    needs: deploy_report
+    runs-on: ubuntu-latest
+    env:
+      SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
+      SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+      EMAIL_RECEIVER: ${{ secrets.EMAIL_RECEIVER }}
+      EMAIL_SENDER: ${{ secrets.EMAIL_SENDER }}
+    steps:
+      - name: Get code
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Send test report email
+        run: |
+          npm install nodemailer
+          node helpers/reportSender.js

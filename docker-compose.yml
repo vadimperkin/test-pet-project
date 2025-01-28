@@ -1,0 +1,23 @@
+version: "3.9"
+services:
+  playwright:
+    image: mcr.microsoft.com/playwright:latest
+    container_name: playwright_test
+    working_dir: /tests
+    volumes:
+      - ./tests:/tests
+      - ./playwright-report:/playwright-report
+    entrypoint: ["npx", "playwright", "test", "--heaed"]
+    environment:
+      - CI=true
+    shm_size: 2Gb
+
+  report-server:
+    image: nginx:latest
+    container_name: report_server
+    ports:
+      - "8080:80"
+    volumes:
+      - ./playwright-report:/usr/share/nginx/html:ro
+    depends_on:
+      - playwright

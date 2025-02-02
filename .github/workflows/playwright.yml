@@ -38,6 +38,8 @@ jobs:
         run: npm ci
       - name: Install Chrome Browser
         run: npx playwright install chromium
+      - name: Check Eslint
+        run: npm run eslint
       - name: Run Playwright tests
         id: test
         run: npx playwright test

@@ -1,13 +1,6 @@
 import { Page } from "@playwright/test";
 import { Auth } from "../../app/page/auth.page";
 
-export type Keyword = keyof ReturnType<KeywordAction["getKeywords"]>;
-export type KeywordArgs = {
-  OpenUrl: [string?];
-  Login: [string, string];
-  VerifyFailedLogin: [];
-};
-
 export class KeywordAction extends Auth {
   getKeywords() {
     return {
@@ -18,6 +11,13 @@ export class KeywordAction extends Auth {
     };
   }
 }
+
+export type Keyword = keyof ReturnType<KeywordAction["getKeywords"]>;
+export type KeywordArgs = {
+  OpenUrl: [string?];
+  Login: [string, string];
+  VerifyFailedLogin: [];
+};
 
 export class TestRunner {
   private keywords: ReturnType<KeywordAction["getKeywords"]>;

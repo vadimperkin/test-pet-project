@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { Application } from "../app";
 import { API } from "../api";
+import type { DefaultAdmin, DefaultIngredients } from "../app/models";
 
 export const baseFixture = test.extend<{ App: Application; Api: API }>({
   App: async ({ page }, use) => {
@@ -13,9 +14,7 @@ export const baseFixture = test.extend<{ App: Application; Api: API }>({
   },
 });
 
-export const loginFixture = baseFixture.extend<
-  DefaultAdmin & { App: Application }
->({
+export const loginFixture = baseFixture.extend<DefaultAdmin & { App: Application }>({
   defaultAdmin: [
     {
       username: "randomName@test.com",
@@ -31,13 +30,11 @@ export const loginFixture = baseFixture.extend<
     await expect(App.auth.addToCart).toBeVisible();
     await use(App);
 
-    console.log("Teard down: executes after test");
+    console.log("Tear down: executes after test");
   },
 });
 
-export const loginAndOrderPizza = loginFixture.extend<
-  DefaultIngredients & { App: Application }
->({
+export const loginAndOrderPizza = loginFixture.extend<DefaultIngredients & { App: Application }>({
   testOptions: [
     {
       ingredients: [
@@ -62,11 +59,7 @@ export const loginAndOrderPizza = loginFixture.extend<
         await App.orderSubmit.addPizzaToCart();
         await App.orderSubmit.verifyAddingToCart();
         await App.orderSubmit.verifyCompoundedPizza();
-        console.log(
-          `New pizza with: ${JSON.stringify(
-            pizza
-          )} has been successfully added!`
-        );
+        console.log(`New pizza with: ${JSON.stringify(pizza)} has been successfully added!`);
       } catch (error) {
         throw new Error(`Error with adding ${pizza} !`);
       }

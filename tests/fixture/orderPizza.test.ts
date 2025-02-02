@@ -1,5 +1,6 @@
 import { loginFixture, loginAndOrderPizza } from "../../fixtures";
 import { createPositiveIngredients } from "../../helpers/constraints";
+import type { Ingredients } from "../../app/models";
 
 const ingredientsPositive: Ingredients = createPositiveIngredients({
   size: "small",

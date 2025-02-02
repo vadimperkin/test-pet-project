@@ -1,5 +1,4 @@
-import type { Keyword } from "./keywordClass.";
-import type { KeywordArgs } from "./keywordClass.";
+import type { Keyword, KeywordArgs } from "./keywordClass.";
 
 export const testData: Array<{ key: Keyword; params: KeywordArgs[Keyword] }> = [
   { key: "OpenUrl", params: ["/login.html"] },

@@ -24,7 +24,7 @@ export default defineConfig<ConfigTypes>({
     baseURL: 'https://play1.automationcamp.ir',
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
-    headless: process.env.GITHUB_RUN_ID ? true : false,
+    headless: !!process.env.GITHUB_RUN_ID,
   },
   expect: {
     timeout: 7000,

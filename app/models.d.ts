@@ -1,11 +1,11 @@
-type DefaultAdmin = {
+export type DefaultAdmin = {
   defaultAdmin: {
     username: string;
     password: string;
   };
 };
 
-type DefaultIngredients = {
+export type DefaultIngredients = {
   testOptions: {
     ingredients: {
       size: "large" | "medium" | "small";
@@ -17,7 +17,7 @@ type DefaultIngredients = {
   };
 };
 
-type Ingredients = {
+export type Ingredients = {
   size: "large" | "medium" | "small";
   flavour: "Cheese" | "Pepperoni" | "Supreme" | "Veggie Delight";
   sauce: "Marinara" | "Buffalo" | "Barbeque";

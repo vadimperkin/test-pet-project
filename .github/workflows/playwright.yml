@@ -19,9 +19,9 @@ jobs:
     strategy:
       matrix:
         shard: [1/2, 2/2]
-    outputs:
-      artifact_name: ${{ steps.output.outputs.artifact_name }}
-      artifact_path: ${{ steps.output.outputs.artifact_path }}
+    # outputs:
+    #   artifact_name: ${{ steps.output.outputs.artifact_name }}
+    #   artifact_path: ${{ steps.output.outputs.artifact_path }}
     env:
       USERNAME: ${{ secrets.USERNAME }}
       PASSWORD: ${{ secrets.PASSWORD }}
@@ -71,11 +71,11 @@ jobs:
           path: playwright-report/
           retention-days: 30
 
-      - name: Set output
-        id: output
-        run: |
-          echo "artifact_name=playwright-report-shard-${{ env.SHARD_NAME }}" >> $GITHUB_ENV
-          echo "artifact_path=playwright-report" >> $GITHUB_ENV
+      # - name: Set output
+      #   id: output
+      #   run: |
+      #     echo "artifact_name=playwright-report-shard-${{ env.SHARD_NAME }}" >> $GITHUB_ENV
+      #     echo "artifact_path=playwright-report" >> $GITHUB_ENV
 
   merge_reports:
     needs: test
@@ -91,16 +91,16 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: playwright-report-shard-1-2
-          path: merged-playwright-reports/shard-1
+          path: playwright-report/shard-1
 
       - uses: actions/download-artifact@v4
         with:
           name: playwright-report-shard-2-2
-          path: merged-playwright-reports/shard-2
+          path: playwright-report/shard-2
 
       - name: Merge Playwright reports
         run: |
-          npx playwright merge-reports merged-playwright-reports/shard-1 merged-playwright-reports/shard-2 --reporter html merged-playwright-reports/final
+          npx playwright merge-reports playwright-report/shard-1 playwright-report/shard-2 --reporter html merged-playwright-reports/final
 
       - name: Upload merged report
         uses: actions/upload-artifact@v4

@@ -45,23 +45,26 @@ jobs:
         run: npm run eslint
       - name: Run Playwright tests (Shard ${{ matrix.shard }})
         id: test
-        run: npx playwright test --shard=${{ matrix.shard }} --output=playwright-report/shard-${{ matrix.shard }}
+        run: npx playwright test --shard=${{ matrix.shard }} --output=playwright-results/shard-${{ matrix.shard }}
       - name: Upload artifact
         id: upload
         uses: actions/upload-artifact@v4
         if: ${{ !failure() && steps.test.outcome != 'failure' }}
         with:
-          name: playwright-report-shard-${{ matrix.shard }}
-          path: playwright-report/
+          name: shard-${{ matrix.shard }}
+          path: playwright-results/
           retention-days: 30
       - name: Set output
         id: output
         run: |
-          echo "artifact_name=playwright-report-shard-${{ matrix.shard }}" >> $GITHUB_ENV
-          echo "artifact_path=playwright-report/" >> $GITHUB_ENV
+          echo "artifact_name=shard-${{ matrix.shard }}" >> $GITHUB_ENV
+          echo "artifact_path=playwright-results/" >> $GITHUB_ENV
   merge_reports:
     needs: test
     runs-on: ubuntu-latest
+    outputs:
+      artifact_name: ${{ steps.output.outputs.artifact_name }}
+      artifact_path: ${{ steps.output.outputs.artifact_path }}
     steps:
       - name: Get code
         uses: actions/checkout@v4
@@ -71,19 +74,24 @@ jobs:
           path: playwright-report/
       - name: Merge Playwright reports
         run: |
-          npx playwright merge-reports playwright-report/playwright-report-shard-1-2 playwright-report/playwright-report-shard-2-2 playwright-report/merged
+          npx playwright merge-reports playwright-results/shard-1-2 playwright-results/shard-2-2 playwright-results/merged
       - name: Upload merged report
         uses: actions/upload-artifact@v4
         with:
           name: playwright-report-merged
-          path: playwright-report/merged
+          path: playwright-results/merged
           retention-days: 30
+      - name: Set output
+        id: output
+        run: |
+          echo "artifact_name=playwright-report-merged" >> $GITHUB_ENV
+          echo "artifact_path=playwright-results/merged" >> $GITHUB_ENV
   deploy_report:
     needs: merge_reports
     uses: ./.github/workflows/reusable-report.yml
     with:
-      artifact_name: ${{ needs.test.outputs.artifact_name }}
-      path: ${{ needs.test.outputs.artifact_path }}
+      artifact_name: ${{ needs.merge_reports.outputs.artifact_name }}
+      path: ${{ needs.merge_reports.outputs.artifact_path }}
       publish_branch: gh-pages
   # send_report:
   #   needs: deploy_report

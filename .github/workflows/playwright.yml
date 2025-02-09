@@ -59,16 +59,16 @@ jobs:
       - name: Set sanitized shard name
         run: echo "SHARD_NAME=$(echo ${{ matrix.shard }} | tr '/' '-')" >> $GITHUB_ENV
 
-      - name: Ensure report directory exists
-        run: mkdir -p playwright-report
+      # - name: Ensure report directory exists
+      #   run: mkdir -p playwright-report
 
       - name: Upload artifact
         id: upload
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: playwright-report-shard-${{ env.SHARD_NAME }}
-          path: playwright-report/
+          name: blob-report-shard-${{ env.SHARD_NAME }}
+          path: blob-report/
           retention-days: 30
 
       # - name: Set output
@@ -90,13 +90,13 @@ jobs:
       - name: Download all shard reports 1-2
         uses: actions/download-artifact@v4
         with:
-          name: playwright-report-shard-1-2
+          name: blob-report-shard-1-2
           path: merged-report/shard-1
 
       - name: Download all shard reports 2-2
         uses: actions/download-artifact@v4
         with:
-          name: playwright-report-shard-2-2
+          name: blob-report-shard-2-2
           path: merged-report/shard-2
 
       - name: Check contents of shard 1

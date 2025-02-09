@@ -13,6 +13,9 @@ jobs:
   test:
     timeout-minutes: 60
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        shard: [1/2, 2/2]
     outputs:
       artifact_name: ${{ steps.output.outputs.artifact_name }}
       artifact_path: ${{ steps.output.outputs.artifact_path }}
@@ -40,45 +43,64 @@ jobs:
         run: npx playwright install chromium
       - name: Check Eslint
         run: npm run eslint
-      - name: Run Playwright tests
+      - name: Run Playwright tests (Shard ${{ matrix.shard }})
         id: test
-        run: npx playwright test
+        run: npx playwright test --shard=${{ matrix.shard }} --output=playwright-report/shard-${{ matrix.shard }}
       - name: Upload artifact
         id: upload
         uses: actions/upload-artifact@v4
         if: ${{ !failure() && steps.test.outcome != 'failure' }}
         with:
-          name: playwright-report
+          name: playwright-report-shard-${{ matrix.shard }}
           path: playwright-report/
           retention-days: 30
       - name: Set output
         id: output
         run: |
-          echo "artifact_name=playwright-report" >> $GITHUB_ENV
+          echo "artifact_name=playwright-report-shard-${{ matrix.shard }}" >> $GITHUB_ENV
           echo "artifact_path=playwright-report/" >> $GITHUB_ENV
-  deploy_report:
+  merge_reports:
     needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get code
+        uses: actions/checkout@v4
+      - name: Download shard reports
+        uses: actions/download-artifact@v4
+        with:
+          path: playwright-report/
+      - name: Merge Playwright reports
+        run: |
+          npx playwright merge-reports playwright-report/playwright-report-shard-1-2 playwright-report/playwright-report-shard-2-2 playwright-report/merged
+      - name: Upload merged report
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-merged
+          path: playwright-report/merged
+          retention-days: 30
+  deploy_report:
+    needs: merge_reports
     uses: ./.github/workflows/reusable-report.yml
     with:
       artifact_name: ${{ needs.test.outputs.artifact_name }}
       path: ${{ needs.test.outputs.artifact_path }}
       publish_branch: gh-pages
-  send_report:
-    needs: deploy_report
-    runs-on: ubuntu-latest
-    env:
-      SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
-      SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
-      EMAIL_RECEIVER: ${{ secrets.EMAIL_RECEIVER }}
-      EMAIL_SENDER: ${{ secrets.EMAIL_SENDER }}
-    steps:
-      - name: Get code
-        uses: actions/checkout@v4
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - name: Send test report email
-        run: |
-          npm install nodemailer
-          node helpers/reportSender.js
+  # send_report:
+  #   needs: deploy_report
+  #   runs-on: ubuntu-latest
+  #   env:
+  #     SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
+  #     SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+  #     EMAIL_RECEIVER: ${{ secrets.EMAIL_RECEIVER }}
+  #     EMAIL_SENDER: ${{ secrets.EMAIL_SENDER }}
+  #   steps:
+  #     - name: Get code
+  #       uses: actions/checkout@v4
+  #     - name: Setup Node
+  #       uses: actions/setup-node@v4
+  #       with:
+  #         node-version: 20
+  #     - name: Send test report email
+  #       run: |
+  #         npm install nodemailer
+  #         node helpers/reportSender.js

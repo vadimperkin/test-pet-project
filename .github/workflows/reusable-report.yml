@@ -21,7 +21,7 @@ permissions:
   contents: write
   pages: write     
 jobs:
-  download_deploy:
+  deploy_report:
     runs-on: ubuntu-latest
     steps:
       - name: Download artifact

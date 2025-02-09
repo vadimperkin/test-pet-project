@@ -19,9 +19,6 @@ jobs:
     strategy:
       matrix:
         shard: [1/2, 2/2]
-    # outputs:
-    #   artifact_name: ${{ steps.output.outputs.artifact_name }}
-    #   artifact_path: ${{ steps.output.outputs.artifact_path }}
     env:
       USERNAME: ${{ secrets.USERNAME }}
       PASSWORD: ${{ secrets.PASSWORD }}
@@ -59,9 +56,6 @@ jobs:
       - name: Set sanitized shard name
         run: echo "SHARD_NAME=$(echo ${{ matrix.shard }} | tr '/' '-')" >> $GITHUB_ENV
 
-      # - name: Ensure report directory exists
-      #   run: mkdir -p playwright-report
-
       - name: Upload artifact
         id: upload
         uses: actions/upload-artifact@v4
@@ -71,18 +65,12 @@ jobs:
           path: blob-report/
           retention-days: 30
 
-      # - name: Set output
-      #   id: output
-      #   run: |
-      #     echo "artifact_name=playwright-report-shard-${{ env.SHARD_NAME }}" >> $GITHUB_ENV
-      #     echo "artifact_path=playwright-report" >> $GITHUB_ENV
-
   merge_reports:
     needs: test
     runs-on: ubuntu-latest
     outputs:
-      artifact_name: ${{ steps.output.outputs.artifact_name }}
-      artifact_path: ${{ steps.output.outputs.artifact_path }}
+      artifact_name: ${{ env.ARTIFACT_NAME }}
+      artifact_path: ${{ env.ARTIFACT_PATH }}
     steps:
       - name: Get code
         uses: actions/checkout@v4
@@ -118,10 +106,9 @@ jobs:
           retention-days: 30
 
       - name: Set output
-        id: output
         run: |
-          echo "artifact_name=merged-report" >> $GITHUB_ENV
-          echo "artifact_path=playwright-reportl" >> $GITHUB_ENV
+          echo "ARTIFACT_NAME=merged-report" >> $GITHUB_ENV
+          echo "ARTIFACT_PATH=playwright-report" >> $GITHUB_ENV
 
   deploy_report:
     needs: merge_reports

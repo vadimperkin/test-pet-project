@@ -91,17 +91,17 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: playwright-report-shard-1-2
-          path: playwright-report/
+          path: merged-report/shard-1
 
       - name: Download all shard reports 2-2
         uses: actions/download-artifact@v4
         with:
           name: playwright-report-shard-2-2
-          path: playwright-report/
+          path:  merged-report/shard-2
 
       - name: Merge Playwright reports
         run: |
-          npx playwright merge-reports playwright-report/playwright-report-shard-1-2 playwright-report/playwright-report-shard-2-2 --reporter html merged-playwright-reports/final
+          npx playwright merge-reports merged-report/shard-1 merged-report/shard-2 --reporter html merged-playwright-reports/final
 
       - name: Upload merged report
         uses: actions/upload-artifact@v4

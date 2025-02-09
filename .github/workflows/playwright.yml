@@ -107,7 +107,7 @@ jobs:
         
       - name: Merge Playwright reports
         run: |
-          npx playwright merge-reports merged-report/shard-1/index.html merged-report/shard-2/index.html --reporter html merged-playwright-reports/final
+          npx playwright merge-reports merged-report/shard-1 merged-report/shard-2 --reporter html merged-playwright-reports/final
 
       - name: Upload merged report
         uses: actions/upload-artifact@v4

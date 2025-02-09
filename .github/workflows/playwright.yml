@@ -45,20 +45,20 @@ jobs:
         run: npm run eslint
       - name: Run Playwright tests (Shard ${{ matrix.shard }})
         id: test
-        run: npx playwright test --shard=${{ matrix.shard }} --output=playwright-results/shard-${{ matrix.shard }}
+        run: npx playwright test --shard=${{ matrix.shard }}
       - name: Upload artifact
         id: upload
         uses: actions/upload-artifact@v4
         if: ${{ !failure() && steps.test.outcome != 'failure' }}
         with:
-          name: shard-${{ matrix.shard }}
-          path: all-blob-reports/
+          name: playwright-report-shard-${{ matrix.shard }}
+          path: playwright-report/
           retention-days: 30
       - name: Set output
         id: output
         run: |
-          echo "artifact_name=shard-${{ matrix.shard }}" >> $GITHUB_ENV
-          echo "artifact_path=all-blob-reports/" >> $GITHUB_ENV
+          echo "artifact_name=playwright-report-shard-${{ matrix.shard }}" >> $GITHUB_ENV
+          echo "artifact_path=playwright-report" >> $GITHUB_ENV
   merge_reports:
     needs: test
     runs-on: ubuntu-latest
@@ -68,24 +68,29 @@ jobs:
     steps:
       - name: Get code
         uses: actions/checkout@v4
-      - name: Download shared reports
+      - name: Download all shard reports
         uses: actions/download-artifact@v4
         with:
-          path: playwright-report/
+          name: playwright-report-shard-1/2
+          path: merged-playwright-reports/shard-1
+      - uses: actions/download-artifact@v4
+        with:
+          name: playwright-report-shard-2/2
+          path: merged-playwright-reports/shard-2
       - name: Merge Playwright reports
         run: |
-          npx playwright merge-reports all-blob-reports/shard-1-2 all-blob-reports/shard-2-2 --reporter html ./all-blob-reports
+          npx playwright merge-reports merged-playwright-reports/shard-1 merged-playwright-reports/shard-2 --reporter html merged-playwright-reports/final
       - name: Upload merged report
         uses: actions/upload-artifact@v4
         with:
           name: playwright-report-merged
-          path: all-blob-reports//merged
+          path: merged-playwright-reports/final
           retention-days: 30
       - name: Set output
         id: output
         run: |
           echo "artifact_name=playwright-report-merged" >> $GITHUB_ENV
-          echo "artifact_path=playwright-report/merged" >> $GITHUB_ENV
+          echo "artifact_path=merged-playwright-reports/final" >> $GITHUB_ENV
   deploy_report:
     needs: merge_reports
     uses: ./.github/workflows/reusable-report.yml

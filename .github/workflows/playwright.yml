@@ -52,13 +52,13 @@ jobs:
         if: ${{ !failure() && steps.test.outcome != 'failure' }}
         with:
           name: shard-${{ matrix.shard }}
-          path: playwright-results/
+          path: all-blob-reports/
           retention-days: 30
       - name: Set output
         id: output
         run: |
           echo "artifact_name=shard-${{ matrix.shard }}" >> $GITHUB_ENV
-          echo "artifact_path=playwright-results/" >> $GITHUB_ENV
+          echo "artifact_path=all-blob-reports/" >> $GITHUB_ENV
   merge_reports:
     needs: test
     runs-on: ubuntu-latest
@@ -68,24 +68,24 @@ jobs:
     steps:
       - name: Get code
         uses: actions/checkout@v4
-      - name: Download shard reports
+      - name: Download shared reports
         uses: actions/download-artifact@v4
         with:
           path: playwright-report/
       - name: Merge Playwright reports
         run: |
-          npx playwright merge-reports playwright-results/shard-1-2 playwright-results/shard-2-2 playwright-results/merged
+          npx playwright merge-reports all-blob-reports/shard-1-2 all-blob-reports/shard-2-2 --reporter html ./all-blob-reports
       - name: Upload merged report
         uses: actions/upload-artifact@v4
         with:
           name: playwright-report-merged
-          path: playwright-results/merged
+          path: all-blob-reports//merged
           retention-days: 30
       - name: Set output
         id: output
         run: |
           echo "artifact_name=playwright-report-merged" >> $GITHUB_ENV
-          echo "artifact_path=playwright-results/merged" >> $GITHUB_ENV
+          echo "artifact_path=playwright-report/merged" >> $GITHUB_ENV
   deploy_report:
     needs: merge_reports
     uses: ./.github/workflows/reusable-report.yml

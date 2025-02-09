@@ -17,7 +17,7 @@ export default defineConfig<ConfigTypes>({
   /* Opt out of parallel tests on CI. */
   workers: process.env.GITHUB_RUN_ID ? 3 : process.env.DEBUG ? 1 : 2,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter: 'html',
+  reporter: process.env.GITHUB_RUN_ID ? 'blob' : 'html',
   reportSlowTests: null,
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {

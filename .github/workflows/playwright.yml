@@ -90,12 +90,12 @@ jobs:
       - name: Download all shard reports
         uses: actions/download-artifact@v4
         with:
-          name: playwright-report/playwright-report-shard-1-2
+          name: playwright-report-shard-1-2
           path: merged-playwright-reports/shard-1
 
       - uses: actions/download-artifact@v4
         with:
-          name: playwright-report/playwright-report-shard-2-2
+          name: playwright-report-shard-2-2
           path: merged-playwright-reports/shard-2
 
       - name: Merge Playwright reports

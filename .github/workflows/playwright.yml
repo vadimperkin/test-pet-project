@@ -1,4 +1,5 @@
 name: Playwright Tests
+
 on:
   push:
     branches:
@@ -6,9 +7,11 @@ on:
   pull_request:
     branches:
       - main
+
 permissions:
-  contents: write  
-  pages: write     
+  contents: write
+  pages: write
+
 jobs:
   test:
     timeout-minutes: 60
@@ -26,39 +29,54 @@ jobs:
     steps:
       - name: Get code
         uses: actions/checkout@v4
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 20
+
       - name: Cache dependencies
         id: cache
         uses: actions/cache@v4
         with:
           path: node_modules
           key: deps-node-modules-${{ hashFiles('**/package-lock.json') }}
+
       - name: Install dependencies
         if: steps.cache.outputs.cache-hit != 'true'
         run: npm ci
+
       - name: Install Chrome Browser
         run: npx playwright install chromium
+
       - name: Check Eslint
         run: npm run eslint
+
       - name: Run Playwright tests (Shard ${{ matrix.shard }})
         id: test
         run: npx playwright test --shard=${{ matrix.shard }}
+
+      - name: Set sanitized shard name
+        run: echo "SHARD_NAME=$(echo ${{ matrix.shard }} | tr '/' '-')" >> $GITHUB_ENV
+
+      - name: Ensure report directory exists
+        run: mkdir -p playwright-report
+
       - name: Upload artifact
         id: upload
         uses: actions/upload-artifact@v4
-        if: ${{ !failure() && steps.test.outcome != 'failure' }}
+        if: always()
         with:
-          name: playwright-report-shard-${{ matrix.shard }}
+          name: playwright-report-shard-${{ env.SHARD_NAME }}
           path: playwright-report/
           retention-days: 30
+
       - name: Set output
         id: output
         run: |
-          echo "artifact_name=playwright-report-shard-${{ matrix.shard }}" >> $GITHUB_ENV
+          echo "artifact_name=playwright-report-shard-${{ env.SHARD_NAME }}" >> $GITHUB_ENV
           echo "artifact_path=playwright-report" >> $GITHUB_ENV
+
   merge_reports:
     needs: test
     runs-on: ubuntu-latest
@@ -68,29 +86,35 @@ jobs:
     steps:
       - name: Get code
         uses: actions/checkout@v4
+
       - name: Download all shard reports
         uses: actions/download-artifact@v4
         with:
-          name: playwright-report-shard-1/2
+          name: playwright-report-shard-1-2
           path: merged-playwright-reports/shard-1
+
       - uses: actions/download-artifact@v4
         with:
-          name: playwright-report-shard-2/2
+          name: playwright-report-shard-2-2
           path: merged-playwright-reports/shard-2
+
       - name: Merge Playwright reports
         run: |
           npx playwright merge-reports merged-playwright-reports/shard-1 merged-playwright-reports/shard-2 --reporter html merged-playwright-reports/final
+
       - name: Upload merged report
         uses: actions/upload-artifact@v4
         with:
           name: playwright-report-merged
           path: merged-playwright-reports/final
           retention-days: 30
+
       - name: Set output
         id: output
         run: |
           echo "artifact_name=playwright-report-merged" >> $GITHUB_ENV
           echo "artifact_path=merged-playwright-reports/final" >> $GITHUB_ENV
+
   deploy_report:
     needs: merge_reports
     uses: ./.github/workflows/reusable-report.yml
@@ -98,6 +122,7 @@ jobs:
       artifact_name: ${{ needs.merge_reports.outputs.artifact_name }}
       path: ${{ needs.merge_reports.outputs.artifact_path }}
       publish_branch: gh-pages
+
   # send_report:
   #   needs: deploy_report
   #   runs-on: ubuntu-latest

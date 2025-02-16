@@ -32,13 +32,17 @@ jobs:
 
       - name: Run API Tests
         run: |
-          npx newman run "https://api.getpostman.com/collections/fa5459db-c05d-40f2-83a6-c410fa3dfdfb?apikey=$POSTMAN_API_KEY" --environment "https://api.getpostman.com/environments/68ec1dde-dbf2-4849-b239-15a8e810981d?apikey=$POSTMAN_API_KEY" \
-          --reporters cli,junit \
-          --reporter-junit-export newman-report.xml
+          npx newman run "https://api.getpostman.com/collections/fa5459db-c05d-40f2-83a6-c410fa3dfdfb?apikey=$POSTMAN_API_KEY" \
+          --environment "https://api.getpostman.com/environments/68ec1dde-dbf2-4849-b239-15a8e810981d?apikey=$POSTMAN_API_KEY" \
+          --reporters cli,junit,htmlextra \
+          --reporter-junit-export newman-report.xml \
+          --reporter-htmlextra-export newman-report.html
 
-      - name: Upload Test Report
+      - name: Upload Test Reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: newman-report
-          path: newman-report.xml
+          name: newman-reports
+          path: |
+            newman-report.xml
+            newman-report.html

@@ -1,0 +1,48 @@
+name: API Tests with Newman
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+jobs:
+  newman-api-tests:
+    runs-on: ubuntu-latest
+    env:
+      POSTMAN_API_KEY: ${{ secrets.POSTMAN_API_KEY }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Cache dependencies
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: deps-node-modules-${{ hashFiles('**/package-lock.json') }}
+
+      - name: Install dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: npm ci
+
+      - name: Run API Tests
+        run: |
+          npx newman run "https://api.getpostman.com/collections/fa5459db-c05d-40f2-83a6-c410fa3dfdfb?apikey=$POSTMAN_API_KEY" \
+          --environment "https://api.getpostman.com/environments/68ec1dde-dbf2-4849-b239-15a8e810981d?apikey=$POSTMAN_API_KEY" \
+          --reporters cli,junit,htmlextra \
+          --reporter-junit-export newman-report.xml \
+          --reporter-htmlextra-export newman-report.html
+
+      - name: Upload Test Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: newman-reports
+          path: |
+            newman-report.xml
+            newman-report.html

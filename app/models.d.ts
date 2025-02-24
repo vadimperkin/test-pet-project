@@ -5,24 +5,16 @@ export type DefaultAdmin = {
   };
 };
 
-export type DefaultIngredients = {
-  testOptions: {
-    ingredients: {
-      size: "large" | "medium" | "small";
-      flavour: "Cheese" | "Pepperoni" | "Supreme" | "Veggie Delight";
-      sauce: "Marinara" | "Buffalo" | "Barbeque";
-      topping: "Onions" | "Green Olive" | "Tomatoes";
-      quantity: number;
-    }[];
-  };
-};
-
 export type Ingredients = {
   size: "large" | "medium" | "small";
   flavour: "Cheese" | "Pepperoni" | "Supreme" | "Veggie Delight";
   sauce: "Marinara" | "Buffalo" | "Barbeque";
   topping: "Onions" | "Green Olive" | "Tomatoes";
   quantity: number;
+};
+
+export type DefaultIngredients = {
+  testOptions: Ingredients[];
 };
 
 declare global {

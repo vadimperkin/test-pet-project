@@ -30,10 +30,25 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         run: npm ci
 
+      - name: Cache Postman Collection and Environment
+        id: cache-postman
+        uses: actions/cache@v4
+        with:
+          path: |
+            postman-collection.json
+            postman-environment.json
+          key: postman-files-${{ github.sha }}
+
+      - name: Download Postman Collection and Environment (only if not cached)
+        if: steps.cache-postman.outputs.cache-hit != 'true'
+        run: |
+          curl -o postman-collection.json "https://api.getpostman.com/collections/fa5459db-c05d-40f2-83a6-c410fa3dfdfb?apikey=$POSTMAN_API_KEY"
+          curl -o postman-environment.json "https://api.getpostman.com/environments/68ec1dde-dbf2-4849-b239-15a8e810981d?apikey=$POSTMAN_API_KEY"
+
       - name: Run API Tests
         run: |
-          npx newman run "https://api.getpostman.com/collections/fa5459db-c05d-40f2-83a6-c410fa3dfdfb?apikey=$POSTMAN_API_KEY" \
-          --environment "https://api.getpostman.com/environments/68ec1dde-dbf2-4849-b239-15a8e810981d?apikey=$POSTMAN_API_KEY" \
+          npx newman run postman-collection.json \
+          --environment postman-environment.json \
           --reporters cli,junit,htmlextra \
           --reporter-junit-export newman-report.xml \
           --reporter-htmlextra-export newman-report.html
